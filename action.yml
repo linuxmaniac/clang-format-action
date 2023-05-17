@@ -26,12 +26,15 @@ inputs:
     description: 'A regex to override the C/C++/Protobuf/CUDA filetype regex. that should be checked. Default results in the regex defined in `check.sh`.'
     required: false
     default: ''
-
+  changed-only:
+    description: 'Check only changed lines at files modified in commit.'
+    required: false
+    default: 'false'
 runs:
   using: "composite"
   steps:
     - run: |
-        "${{ github.action_path }}/check.sh" "${{ inputs.clang-format-version }}" "${{ inputs.check-path }}" "${{ inputs.fallback-style }}" "${{ inputs.exclude-regex }}" "${{ inputs.include-regex }}"
+        "${{ github.action_path }}/check.sh" "${{ inputs.clang-format-version }}" "${{ inputs.check-path }}" "${{ inputs.fallback-style }}" "${{ inputs.exclude-regex }}" "${{ inputs.include-regex }}" "${{ inputs.changed-only }}"
       shell: bash
     - name: Save PR head commit SHA
       if: failure() && github.event_name == 'pull_request'

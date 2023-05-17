@@ -41,15 +41,29 @@ format_diff() {
 	return 0
 }
 
+diff_only() {
+	formatted="$(git diff -U0 --no-color --relative HEAD^ | \
+		docker run -i -v "$(pwd)":"$(pwd)" -w "$(pwd)" \
+			--rm ghcr.io/jidicula/clang-format:"$CLANG_FORMAT_MAJOR_VERSION" \
+			/usr/bin/clang-format-diff -p1 -style=file -fallback-style="$FALLBACK_STYLE" \
+			-iregex "$INCLUDE_REGEX")"
+	[[ -n $formatted ]] && exit_code=1
+}
+
 CLANG_FORMAT_MAJOR_VERSION="$1"
 CHECK_PATH="$2"
 FALLBACK_STYLE="$3"
 EXCLUDE_REGEX="$4"
 INCLUDE_REGEX="$5"
+CHANGED_ONLY="$6"
 
 # Set the regex to an empty string regex if nothing was provided
 if [[ -z $EXCLUDE_REGEX ]]; then
 	EXCLUDE_REGEX="^$"
+else
+	if [[ $CHANGED_ONLY != false ]]; then
+		echo "exclude-regex option will be ignored" >&2
+	fi
 fi
 
 # Set the filetype regex if nothing was provided.
@@ -73,18 +87,21 @@ fi
 # initialize exit code
 exit_code=0
 
-# All files improperly formatted will be printed to the output.
-src_files=$(find "$CHECK_PATH" -name .git -prune -o -regextype posix-egrep -regex "$INCLUDE_REGEX" -print)
+if [[ $CHANGED_ONLY == false ]]; then
+	# All files improperly formatted will be printed to the output.
+	src_files=$(find "$CHECK_PATH" -name .git -prune -o -regextype posix-egrep -regex "$INCLUDE_REGEX" -print)
 
-# check formatting in each source file
-IFS=$'\n' # Loop below should separate on new lines, not spaces.
-for file in $src_files; do
-	# Only check formatting if the path doesn't match the regex
-	if ! [[ ${file} =~ $EXCLUDE_REGEX ]]; then
-		format_diff "${file}"
-	fi
-done
-
+	# check formatting in each source file
+	IFS=$'\n' # Loop below should separate on new lines, not spaces.
+	for file in $src_files; do
+		# Only check formatting if the path doesn't match the regex
+		if ! [[ ${file} =~ $EXCLUDE_REGEX ]]; then
+			format_diff "${file}"
+		fi
+	done
+else
+	diff_only
+fi
 # global exit code is flipped to nonzero if any invocation of `format_diff` has
 # a formatting difference.
 exit "$exit_code"

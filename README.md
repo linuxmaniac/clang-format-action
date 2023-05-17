@@ -44,6 +44,9 @@ You can sponsor me [here](https://github.com/sponsors/jidicula)!
 * `include-regex` [optional]: A regex to include files or directories that should be checked.
   * Default: `^.*\.((((c|C)(c|pp|xx|\+\+)?$)|((h|H)h?(pp|xx|\+\+)?$))|(ino|pde|proto|cu))$`
   * Pattern matching is done with a POSIX `grep -E` extended regex, **not** a glob expression. You can exclude multiple patterns like this: `(hello|world)`. Build and verify your regex at https://regex101.com .
+* `changed-only` [optional]: check only changed lines in commit.
+  * Default: `false`
+  * Available values: `true`, `false`
 
 This action checks all C/C++/Protobuf (including Arduino `.ino` and `.pde`) files in the provided directory in the GitHub workspace are formatted correctly using `clang-format`. If no directory is provided or the provided path is not a directory in the GitHub workspace, all C/C++/Protobuf files are checked.
 
